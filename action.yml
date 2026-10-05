@@ -1,0 +1,57 @@
+name: Patchnote
+description: AI-written release notes from your merged PRs and commits, published when you push a version tag.
+branding:
+  icon: file-text
+  color: green
+
+inputs:
+  github-token:
+    description: Token with permission to write releases (use secrets.GITHUB_TOKEN with contents write).
+    required: true
+  tone:
+    description: "technical (for developers) or customer (for end users)"
+    default: technical
+  publish:
+    description: Create or update the GitHub Release with the notes.
+    default: "true"
+  gemini-api-key:
+    description: Gemini API key (optional if you pass a Groq key).
+    required: false
+  groq-api-key:
+    description: Groq API key, used as backup or on its own.
+    required: false
+  webhook-url:
+    description: Discord or Slack webhook to notify (optional).
+    required: false
+
+runs:
+  using: composite
+  steps:
+    - uses: actions/setup-python@v5
+      with:
+        python-version: "3.12"
+
+    - name: Install Patchnote
+      shell: bash
+      run: pip install -r "$ACTION_PATH/requirements.txt"
+      env:
+        ACTION_PATH: ${{ github.action_path }}
+
+    - name: Generate release notes
+      shell: bash
+      working-directory: ${{ github.action_path }}
+      # Values go through env vars, never pasted into the script (prevents script injection).
+      env:
+        REPO: ${{ github.repository }}
+        TAG: ${{ github.ref_name }}
+        TONE: ${{ inputs.tone }}
+        PUBLISH: ${{ inputs.publish }}
+        GITHUB_TOKEN: ${{ inputs.github-token }}
+        GEMINI_API_KEY: ${{ inputs.gemini-api-key }}
+        GROQ_API_KEY: ${{ inputs.groq-api-key }}
+        WEBHOOK_URL: ${{ inputs.webhook-url }}
+      run: |
+        ARGS=(--repo "$REPO" --tag "$TAG" --tone "$TONE")
+        if [ "$PUBLISH" = "true" ]; then ARGS+=(--publish); fi
+        if [ -n "$WEBHOOK_URL" ]; then ARGS+=(--notify); fi
+        python -m patchnote.cli "${ARGS[@]}"
