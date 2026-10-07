@@ -87,7 +87,7 @@ Useful flags: `--no-ai` (rules only), `--explain` (show why each category was ch
 
 - Needs version tags like `v1.2.3` or `1.2.3`. Other tag schemes are not supported yet.
 - Compares up to about 1,000 commits per release.
-- Relies on free-tier model APIs, which can be slow or busy (hence the failover).
+- Relies on free-tier model APIs, which can be slow or busy at times (hence the failover).
 - Tests mock GitHub and the AI providers; they do not call the live services.
 - Writing a `CHANGELOG.md` is supported from the command line, but the Action does not commit it back to your repo yet.
 
